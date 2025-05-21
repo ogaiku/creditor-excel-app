@@ -11,20 +11,28 @@ TEMPLATE_PATH = Path("internal_template.xlsx")
 st.set_page_config(page_title="債務者別Excel出力", layout="wide")
 st.title("債務者別 債権者一覧Excel出力アプリ")
 
+# セッションにデータ蓄積
 if "uploaded_data" not in st.session_state:
     st.session_state.uploaded_data = []
 
-json_file = st.file_uploader("債権者データ（JSON）をアップロード", type="json")
-if json_file:
-    data = json.load(json_file)
-    if isinstance(data, dict): data = [data]
-    st.session_state.uploaded_data.extend(data)
-    st.success(f"{len(data)} 件のデータを追加しました。")
+# JSON貼り付け欄
+st.subheader("📋 債権者データ（JSON）を貼り付けて登録")
+json_input = st.text_area("下にJSONデータを貼り付けてください（配列または単体）", height=300)
 
+if st.button("✅ JSONを登録"):
+    try:
+        data = json.loads(json_input)
+        if isinstance(data, dict): data = [data]
+        st.session_state.uploaded_data.extend(data)
+        st.success(f"{len(data)} 件のデータを追加しました。")
+    except json.JSONDecodeError as e:
+        st.error(f"JSONの形式に誤りがあります: {e}")
+
+# アップロード済データの表示・出力
 if st.session_state.uploaded_data:
     df_all = pd.DataFrame(st.session_state.uploaded_data)
     debtor_names = df_all["debtor_name"].dropna().unique().tolist()
-    selected_debtor = st.selectbox("債務者を選択", debtor_names)
+    selected_debtor = st.selectbox("📌 債務者を選択", debtor_names)
 
     df_debtor = df_all[df_all["debtor_name"] == selected_debtor]
     st.dataframe(df_debtor)
@@ -41,3 +49,4 @@ if st.session_state.uploaded_data:
     if st.button("📥 Excelダウンロード"):
         excel = make_excel(selected_debtor, df_debtor)
         st.download_button("⬇ ダウンロード", data=excel, file_name=f"{selected_debtor}_fields_master.xlsx")
+
