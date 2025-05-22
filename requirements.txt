@@ -1,0 +1,7 @@
+streamlit
+pandas
+openpyxl
+google-auth
+oauth2client
+pydrive2
+requests
